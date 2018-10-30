@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/virgilbugnariu/node-recap/issues"
   },
-  "homepage": "https://github.com/virgilbugnariu/node-recap#readme"
+  "homepage": "https://github.com/virgilbugnariu/node-recap#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "jsonwebtoken": "^8.3.0",
+    "mongoose": "^5.3.7"
+  }
 }
