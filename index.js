@@ -97,13 +97,15 @@ db.once('open', function() {
       ]};
     }
 
-    Contact.find(query, null, { sort: { firstName: sortingParam } }, (err, data) => {
-      if(err) {
-        res.status(500).send(Response.serverError);
-      } else {
-        res.status(200).send(data);
-      }
-    });
+    Contact
+      .find(query, null, { sort: { firstName: sortingParam } })
+      .catch((err) => {
+        console.error(err);
+        return res.status(500).send(Response.serverError);
+      })
+      .then(data => {
+        return res.status(200).send(data);
+      });
   });
 
   /*
@@ -115,27 +117,31 @@ db.once('open', function() {
     const lastName = req.body.lastName;
     const phoneNumber = req.body.phoneNumber;
 
-    Contact.findOne({firstName, lastName, phoneNumber}, (err, data) => {
-      if(err) {
-        res.status(500).send(Response.serverError);
-      }
+    Contact.findOne({firstName, lastName, phoneNumber})
+      .catch(err => {
+        console.error(err);
+        return res.status(500).send(Response.serverError);
+      })
+      .then(data => {
+        if(!data) {
+          const newContact = new Contact({
+            firstName,
+            lastName,
+            phoneNumber,
+          });
 
-      if(!data) {
-        const newContact = new Contact({
-          firstName,
-          lastName,
-          phoneNumber,
-        });
-
-        return newContact.save((err, person) => {
-          if(!err) {
-            res.status(201).send(person);
-          }
-        });
-      } else {
-        return res.status(400).send(Response.alreadyExists);
-      }
-    });
+          return newContact.save();
+        } else {
+          return null;
+        }
+      })
+      .then((person) => {
+        if(!person) {
+          return res.status(400).send(Response.alreadyExists);
+        } else {
+          return res.status(201).send(person);
+        }
+      });
   });
 
   /*
@@ -152,30 +158,46 @@ db.once('open', function() {
         firstName,
         lastName,
         phoneNumber,
-      },
-        {new: true},
-        (err, data) => {
-        if(err) {
+      }, {new: true})
+        .catch( err => {
+          console.error(err);
           return res.status(500).send(Response.serverError);
-        } else {
-          return res.status(200).send(data);
-        }
-      });
-    } else if(Array.isArray(req.body)) {
-      const entries = req.body;
-
-      entries.forEach( entry => {
-        const entryId = entry._id;
-        Contact.updateOne({ _id: entryId}, {
-          ...entry,
-        }, (err) => {
-          if(err) {
-            return res.status(500).send(Response.serverError);
+        })
+        .then( data => {
+          if(!data) {
+            return res.status(404).send(Response.notFound);
+          } else {
+            return res.status(200).send(data);
           }
         });
+
+    } else if(Array.isArray(req.body)) {
+
+      const entries = req.body;
+      const updatedEntries = [];
+
+      const updateQueue = entries.map( entry => {
+        const entryId = entry._id;
+
+        return Contact.updateOne({ _id: entryId}, { ...entry })
+          .then( raw => raw)
+          .then( data => {
+            if(data.nModified === 1) {
+              updatedEntries.push(entry);
+            }
+          });
       });
 
-      return res.status(200).send(entries);
+
+      Promise
+        .all(updateQueue)
+        .catch(err => {
+          console.error(err);
+          return res.status(500).send(Response.serverError);
+        })
+        .then( () => {
+          return res.status(200).send(updatedEntries);
+        });
     } else {
       return res.status(400).send(Response.badRequest);
     }
@@ -187,17 +209,18 @@ db.once('open', function() {
   router.delete('/contacts/:id', JWTMiddleware, (req, res) => {
     const id = req.params.id;
     if(id) {
-      Contact.findOneAndDelete({_id: id}, (err, data) => {
-        if(err) {
-          res.status(500).send(Response.serverError);
-        } else {
+      Contact.findOneAndDelete({_id: id})
+        .catch( err => {
+          console.error(err);
+          return res.status(500).send(Response.serverError);
+        })
+        .then( data => {
           if(!data) {
             res.status(404).send(Response.notFound);
           } else {
             res.status(204).send();
           }
-        }
-      });
+        });
     } else {
       return res.status(400).send(Response.badRequest);
     }
