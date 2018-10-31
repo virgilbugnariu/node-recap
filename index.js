@@ -39,7 +39,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
  * Handle Login
  */
 router.get('/login', (req, res) => {
-  return res.send(400).send(Response.badRequest);
+  return res.status(400).send(Response.badRequest);
 });
 
 router.post('/login', (req, res) => {
@@ -78,11 +78,11 @@ router.post('/login', (req, res) => {
 });
 
 router.put('/login', (req, res) => {
-  return res.send(400).send(Response.badRequest);
+  return res.status(400).send(Response.badRequest);
 });
 
 router.delete('/login', (req, res) => {
-  return res.send(400).send(Response.badRequest);
+  return res.status(400).send(Response.badRequest);
 });
 
 /*
