@@ -60,7 +60,7 @@ router.post('/login', (req, res) => {
           return jwt.sign({
             exp: Math.floor(Date.now() / 1000) + 3600,
             username: username,
-          }, "JWT_SECRET");
+          }, JWTSecret);
         } else {
           return null
         }
