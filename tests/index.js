@@ -49,7 +49,7 @@ describe("CRUD Functionality", () => {
     phoneNumber: "123454363",
   };
 
-  beforeEach(function() {
+  before(function() {
     return new Promise( (resolve) => {
       chai.request(server)
         .post('/api/login')
