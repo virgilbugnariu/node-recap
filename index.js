@@ -19,15 +19,19 @@ app.use('/api', router);
 
 const JWTMiddleware = (req, res, next) => {
   const JWToken = req.headers.authorization;
-  const cleanToken = JWToken.replace('Bearer ', '');
+  if(JWToken) {
+    const cleanToken = JWToken.replace('Bearer ', '');
 
-  jwt.verify(cleanToken, JWTSecret, (err, isValid) => {
-    if(!isValid) {
-      res.status(401).send(Response.unauthorized);
-    } else {
-      next();
-    }
-  });
+    jwt.verify(cleanToken, JWTSecret, (err, isValid) => {
+      if(!isValid) {
+        res.status(401).send(Response.unauthorized);
+      } else {
+        next();
+      }
+    });
+  } else {
+    res.status(401).send(Response.unauthorized);
+  }
 };
 
 const db = mongoose.connection;
@@ -40,6 +44,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
  */
 router.get('/login', (req, res) => {
   return res.status(400).send(Response.badRequest);
+  // return res.status(400).send('denied');
 });
 
 router.post('/login', (req, res) => {
@@ -190,7 +195,7 @@ router.put('/contacts/:id?', JWTMiddleware, (req, res) => {
   const phoneNumber = req.body.phoneNumber;
 
   if(id && mongoose.Types.ObjectId.isValid(id)) {
-    Contact.findByIdAndUpdate(id, {
+    Contact.findOneAndUpdate(id, {
       firstName,
       lastName,
       phoneNumber,
@@ -269,4 +274,7 @@ router.delete('/contacts/:id', JWTMiddleware, (req, res) => {
 });
 
 const server = app.listen(3000, () => console.log('server started'));
-module.exports = server;
+module.exports = {
+  server,
+  JWTSecret,
+};
